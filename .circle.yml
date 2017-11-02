@@ -1,0 +1,31 @@
+machine:
+  # services:
+  #   - docker
+  environment:
+    REPO: joshdvir/slackcat
+    VERSION: 0.4
+    IMPORT_PATH: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
+    PRIVATE_GOPATH: "$(echo $GOPATH | sed 's/:.*$//g')"
+    PACKAGE_NAME: "$(echo $CIRCLE_PROJECT_REPONAME | sed 's/go-//g')"
+
+dependencies:
+  override:
+    - mkdir -p ~/cache "$PRIVATE_GOPATH/src/$IMPORT_PATH"
+    - go version
+    - docker info
+    - go get -t -d -v ./...
+    - go build -v
+
+test:
+  override:
+    - echo "no tests"
+
+deployment:
+  master:
+    branch: master
+    commands:
+      - go version
+      - go get github.com/mitchellh/gox
+      - go get github.com/tcnksm/ghr
+      - CGO_ENABLED=0 gox -output "dist/slackcat-{{.OS}}-{{.Arch}}"
+      # - ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace v$VERSION dist/
